@@ -5,6 +5,7 @@ import com.esercizio.travel.entities.Worker;
 import com.esercizio.travel.exceptions.BadRequestException;
 import com.esercizio.travel.exceptions.NotFoundException;
 import com.esercizio.travel.payloads.WorkerDTO;
+import com.esercizio.travel.repositories.ReservationRepository;
 import com.esercizio.travel.repositories.WorkerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,9 @@ class WorkerServiceTest {
 
     @Mock
     private WorkerRepository workerRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
 
     @Mock
     private Cloudinary cloudinary;
@@ -71,5 +75,17 @@ class WorkerServiceTest {
         when(workerRepository.existsByEmail("altra@mail.com")).thenReturn(true);
 
         assertThrows(BadRequestException.class, () -> workerService.findByIdAndUpdate(id, dto));
+    }
+
+    @Test
+    void deleteRemovesReservationsBeforeWorker() {
+        UUID id = UUID.randomUUID();
+        Worker existing = new Worker("mrossi", "Mario", "Rossi", "mario.rossi@mail.com");
+        when(workerRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        workerService.findByIdAndDelete(id);
+
+        verify(reservationRepository).deleteAllByWorker_Id(id);
+        verify(workerRepository).delete(existing);
     }
 }

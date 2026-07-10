@@ -6,12 +6,14 @@ import com.esercizio.travel.entities.Worker;
 import com.esercizio.travel.exceptions.BadRequestException;
 import com.esercizio.travel.exceptions.NotFoundException;
 import com.esercizio.travel.payloads.WorkerDTO;
+import com.esercizio.travel.repositories.ReservationRepository;
 import com.esercizio.travel.repositories.WorkerRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -21,10 +23,12 @@ import java.util.UUID;
 @Service
 public class WorkerService {
     private final WorkerRepository workerRepository;
+    private final ReservationRepository reservationRepository;
     private final Cloudinary cloudinary;
 
-    public WorkerService(WorkerRepository workerRepository, Cloudinary cloudinary) {
+    public WorkerService(WorkerRepository workerRepository, ReservationRepository reservationRepository, Cloudinary cloudinary) {
         this.workerRepository = workerRepository;
+        this.reservationRepository = reservationRepository;
         this.cloudinary = cloudinary;
     }
 
@@ -64,8 +68,10 @@ public class WorkerService {
         return workerRepository.save(found);
     }
 
+    @Transactional
     public void findByIdAndDelete(UUID id) {
         Worker found = findById(id);
+        reservationRepository.deleteAllByWorker_Id(id); // sennò la FK delle prenotazioni si rompe
         workerRepository.delete(found);
     }
 

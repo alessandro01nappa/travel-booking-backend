@@ -5,20 +5,24 @@ import com.esercizio.travel.enums.TripState;
 import com.esercizio.travel.exceptions.NotFoundException;
 import com.esercizio.travel.payloads.BusinessTripDTO;
 import com.esercizio.travel.repositories.BusinessTripRepository;
+import com.esercizio.travel.repositories.ReservationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 public class BusinessTripService {
     private final BusinessTripRepository businessTripRepository;
+    private final ReservationRepository reservationRepository;
 
-    public BusinessTripService(BusinessTripRepository businessTripRepository) {
+    public BusinessTripService(BusinessTripRepository businessTripRepository, ReservationRepository reservationRepository) {
         this.businessTripRepository = businessTripRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     public BusinessTrip save(BusinessTripDTO body) {
@@ -45,8 +49,10 @@ public class BusinessTripService {
         return businessTripRepository.save(found);
     }
 
+    @Transactional
     public void findByIdAndDelete(UUID id) {
         BusinessTrip found = findById(id);
+        reservationRepository.deleteAllByBusinessTrip_Id(id); // sennò la FK delle prenotazioni si rompe
         businessTripRepository.delete(found);
     }
 

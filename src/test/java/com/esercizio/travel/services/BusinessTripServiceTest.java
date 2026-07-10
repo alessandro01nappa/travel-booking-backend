@@ -5,6 +5,7 @@ import com.esercizio.travel.enums.TripState;
 import com.esercizio.travel.exceptions.NotFoundException;
 import com.esercizio.travel.payloads.BusinessTripDTO;
 import com.esercizio.travel.repositories.BusinessTripRepository;
+import com.esercizio.travel.repositories.ReservationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,9 @@ class BusinessTripServiceTest {
 
     @Mock
     private BusinessTripRepository businessTripRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
 
     @InjectMocks
     private BusinessTripService businessTripService;
@@ -56,5 +60,17 @@ class BusinessTripServiceTest {
         BusinessTrip updated = businessTripService.updateStatus(id, TripState.COMPLETED);
 
         assertEquals(TripState.COMPLETED, updated.getStatus());
+    }
+
+    @Test
+    void deleteRemovesReservationsBeforeTrip() {
+        UUID id = UUID.randomUUID();
+        BusinessTrip trip = new BusinessTrip("Roma", LocalDate.of(2026, 10, 1));
+        when(businessTripRepository.findById(id)).thenReturn(Optional.of(trip));
+
+        businessTripService.findByIdAndDelete(id);
+
+        verify(reservationRepository).deleteAllByBusinessTrip_Id(id);
+        verify(businessTripRepository).delete(trip);
     }
 }
